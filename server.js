@@ -4,7 +4,7 @@ const bodyParser = require('body-parser')
 const MongoClient = require('mongodb').MongoClient
 
 var db, collection;
-
+//could add your own mongoDB string later
 const url = "mongodb+srv://demo:demo@cluster0-q2ojb.mongodb.net/test?retryWrites=true";
 const dbName = "demo";
 
@@ -31,6 +31,7 @@ app.get('/', (req, res) => {
 })
 
 app.post('/messages', (req, res) => {
+  console.log("request body", req.body)
   db.collection('messages').insertOne({name: req.body.name, msg: req.body.msg, thumbUp: 0, thumbDown:0}, (err, result) => {
     if (err) return console.log(err)
     console.log('saved to database')
@@ -38,15 +39,36 @@ app.post('/messages', (req, res) => {
   })
 })
 
-app.put('/messages', (req, res) => {
+app.put('/messages/upVote', (req, res) => {
+  // console.log("request body", req.body)
   db.collection('messages')
   .findOneAndUpdate({name: req.body.name, msg: req.body.msg}, {
-    $set: {
-      thumbUp:req.body.thumbUp + 1
+    $inc: {
+      thumbUp: 1
+      // thumbUp (comes from the thumbUp key in a specific document from mongoDB)
+      // req.body.thumbUp is the request that comes from main.js fetch
+      // { thumbUp + 1 } for inc if you want to use it
     }
   }, {
     sort: {_id: -1},
-    upsert: true
+    upsert: false
+  }, (err, result) => {
+    if (err) return res.send(err)
+    res.send(result)
+  })
+})
+
+app.put('/messages/downVote', (req, res) => {
+  console.log(req.body)
+  db.collection('messages')
+  .findOneAndUpdate({name: req.body.name, msg: req.body.msg}, {
+    $inc: {
+      thumbUp: -1
+      // { thumbUp - 1} for $inc
+    }
+  }, {
+    sort: {_id: -1},
+    upsert: false
   }, (err, result) => {
     if (err) return res.send(err)
     res.send(result)
@@ -59,3 +81,17 @@ app.delete('/messages', (req, res) => {
     res.send('Message deleted!')
   })
 })
+
+// function function1(){
+
+// }
+
+// async function function2(){
+//   return "Hello";
+// }
+
+// function2().then(result => console.log(result));
+
+// const result = function2();
+// console.log(result);
+
